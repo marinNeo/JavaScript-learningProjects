@@ -1,84 +1,95 @@
-//listen for submit
-document.getElementById('loan-form').addEventListener('submit', function(e) {
-    //hide results
-    document.getElementById('results').style.display = 'none';
+//game values
+let min = 1,
+    max = 10,
+    winningNumber  = getRandomNum(min, max),
+    guessesLeft = 3;
 
-    //show loader
-    document.getElementById('loading').style.display = 'block';
+//UI elements
+const game = document.querySelector('#game'),
+      minNum = document.querySelector('.min-num'),
+      maxNum = document.querySelector('.max-num'),
+      guessBtn = document.querySelector('#guess-btn'),
+      guessInput = document.querySelector('#guess-input'),
+      message = document.querySelector('.message');
 
-    setTimeout(calculateResults, 2000);
+//assign UI min and max
+minNum.textContent = min;
+maxNum.textContent = max;
 
-    e.preventDefault();
-});
+//play again event listener
+game.addEventListener('mousedown', function(e) {
+    if(e.target.className === 'play-again') {
+        window.location.reload();
+    }
+})
 
-//calculate result
-function calculateResults() {
-    //UI variables
-    const amount = document.getElementById('amount');
-    const interest = document.getElementById('interest');
-    const years = document.getElementById('years');
-    const montlyPayment = document.getElementById('monthly-payment');
-    const totalPayment = document.getElementById('total-payment');
-    const totalInterest = document.getElementById('total-interest');
+//listen for guess
+guessBtn.addEventListener('click', function() {
+    let guess = parseInt(guessInput.value)
 
-    const principal = parseFloat(amount.value);
-    const calculatedInterest = parseFloat(interest.value) / 100 / 12;
-    const calculatedPayments = parseFloat(years.value) * 12;
-
-    //compute monthly payments
-    const x = Math.pow(1 + calculatedInterest, calculatedPayments);
-    const monthly = (principal*x*calculatedInterest)/(x-1);
-
-    if(isFinite(monthly)) {
-        montlyPayment.value = monthly.toFixed(2);
-        totalPayment.value = (monthly*calculatedPayments).toFixed(2);
-        totalInterest.value = ((monthly*calculatedPayments) - principal).toFixed(2);
-
-        //show results
-        document.getElementById('results').style.display = 'block';
-
-        //hide loader
-        document.getElementById('loading').style.display = 'none';
-
-    } else {
-        showError('Please check your numbers') 
-
-        
+    //validate input
+    if(isNaN(guess) || guess < min || guess > max) {
+        setMessage(`Please enter a number between ${min} and ${max}`, 'red') 
     }
 
-    
+    //check if won
+    if(guess === winningNumber) {
+        
+        gameOver(true, `${winningNumber} is correct. You win.`);
+
+    } else {
+        //wrong number
+        guessesLeft -= 1;
+
+        if(guessesLeft === 0) {
+            //game over lost
+
+            gameOver(false, `Game over. You lose. The correct number was ${winningNumber}`)
+
+        } else {
+            //game continues answer wrong
+
+            //change border color
+        guessInput.style.borderColor = 'red';
+
+        //clear the input
+            guessInput.value = '';
+
+            //tell user its the wrong number and inform of remaining guesses
+            setMessage(`${guess} is not correct. ${guessesLeft} guesses left.`, 'red')
+        }
+    }
+})
+
+//game over
+function gameOver(won, msg) {
+    let color;
+    won === true ? color = 'green' : color = 'red';
+
+    //disable input
+    guessInput.disabled = true;
+    //change border color
+    guessInput.style.borderColor = color;
+
+    //set text color
+    message.style.color = color;
+
+    //set winning message
+    setMessage(msg)
+
+    //play again?
+    guessBtn.value = 'Play again';
+    guessBtn.className += 'play-again';
 }
 
-//show Error
-function showError(error) {
-//hide results
-document.getElementById('results').style.display = 'nono';
-
-//hide loader
-document.getElementById('loading').style.display = 'none';
-
-//create a div
-const errorDiv = document.createElement('div');
-
-//get elements
-const card = document.querySelector('.card');
-const heading = document.querySelector('.heading');
-
-
-//add class
-errorDiv.className = 'alert alert-danger';
-
-//create text node and append to div
-errorDiv.appendChild(document.createTextNode(error))
-
-//insert error above heading
-card.insertBefore(errorDiv, heading);
-
-//clear error after 3 seconds
-setTimeout(clearError, 3000);
+//getWinningNum
+function getRandomNum(min, max) {
+    return Math.floor(Math.random()*(max-min+1) + min);
 }
 
-//clear error
-function clearError() {
-    document.querySelector('.alert').remove(); 
+//set Message
+function setMessage(msg, color) {
+    message.style.color = color;
+    message.textContent = msg;
 }
+
